@@ -1,34 +1,135 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
-import "./App.css";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Home from "./pages/auth/Home";
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
+import Results from "./pages/Results";
+
+// User Pages
+import UserDashboard from "./pages/user/Dashboard";
+import VerifyReport from "./pages/user/VerifyReport";
+import History from "./pages/user/History";
+import DietTracking from "./pages/user/DietTracking";
+import DownloadReport from "./pages/user/DownloadReport";
+import ProfileSettings from "./pages/user/ProfileSettings";
+
+// Admin Pages
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import Users from "./pages/admin/Users";
+import ModelManagement from "./pages/admin/ModelManagement";
 
 function App() {
-  const [count, setCount] = useState(0);
-
   return (
-    <>
-      <div className="bg-red-500">
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+
+          {/* User Routes */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <UserDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/verify-report"
+            element={
+              <ProtectedRoute>
+                <VerifyReport />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/history"
+            element={
+              <ProtectedRoute>
+                <History />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/diet-tracking"
+            element={
+              <ProtectedRoute>
+                <DietTracking />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/download-report"
+            element={
+              <ProtectedRoute>
+                <DownloadReport />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile-settings"
+            element={
+              <ProtectedRoute>
+                <ProfileSettings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/results"
+            element={
+              <ProtectedRoute>
+                <Results />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Admin Routes */}
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute>
+                <Users />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/models"
+            element={
+              <ProtectedRoute>
+                <ModelManagement />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Legacy routes - redirect to new routes */}
+          <Route
+            path="/input"
+            element={<Navigate to="/verify-report" replace />}
+          />
+          <Route
+            path="/profile"
+            element={<Navigate to="/profile-settings" replace />}
+          />
+          <Route
+            path="/admin"
+            element={<Navigate to="/admin/dashboard" replace />}
+          />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
