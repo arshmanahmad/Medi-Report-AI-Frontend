@@ -1,7 +1,8 @@
 import DashboardLayout from "../../components/Layout/DashboardLayout";
 import { useAuth } from "../../contexts/AuthContext";
-import { useEffect, useState } from "react";
-import { mockGetHealthHistory } from "../../services/mockApi";
+import { useDataRefresh } from "../../contexts/DataRefreshContext";
+import { useEffect, useState, useMemo, useCallback } from "react";
+import { getHealthHistory } from "../../services/backend";
 import type { HealthHistory } from "../../types";
 import { Link } from "react-router-dom";
 import {
@@ -11,9 +12,23 @@ import {
   FiAlertCircle,
   FiArrowRight,
 } from "react-icons/fi";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Legend,
+  Tooltip,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+} from "recharts";
 
 export default function UserDashboard() {
   const { user } = useAuth();
+  const { refreshKey } = useDataRefresh();
   const [history, setHistory] = useState<HealthHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -23,39 +38,70 @@ export default function UserDashboard() {
     lowRiskCount: 0,
   });
 
+  const loadData = useCallback(async () => {
+    if (!user?.id) return;
+    setLoading(true);
+    try {
+      const data = await getHealthHistory(user.id);
+      setHistory(data);
+
+      let highRisk = 0;
+      let moderateRisk = 0;
+      let lowRisk = 0;
+      data.forEach((report) => {
+        report.predictions.forEach((pred) => {
+          if (pred.riskLevel === "High") highRisk++;
+          else if (pred.riskLevel === "Moderate") moderateRisk++;
+          else lowRisk++;
+        });
+      });
+
+      setStats({
+        totalReports: data.length,
+        highRiskCount: highRisk,
+        moderateRiskCount: moderateRisk,
+        lowRiskCount: lowRisk,
+      });
+    } catch (error) {
+      console.error("Failed to load data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
+
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const data = await mockGetHealthHistory();
-        setHistory(data);
-
-        // Calculate statistics
-        let highRisk = 0;
-        let moderateRisk = 0;
-        let lowRisk = 0;
-
-        data.forEach((report) => {
-          report.predictions.forEach((pred) => {
-            if (pred.riskLevel === "High") highRisk++;
-            else if (pred.riskLevel === "Moderate") moderateRisk++;
-            else lowRisk++;
-          });
-        });
-
-        setStats({
-          totalReports: data.length,
-          highRiskCount: highRisk,
-          moderateRiskCount: moderateRisk,
-          lowRiskCount: lowRisk,
-        });
-      } catch (error) {
-        console.error("Failed to load data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadData();
-  }, []);
+  }, [loadData, refreshKey]);
+
+  useEffect(() => {
+    const onFocus = () => loadData();
+    const handler = () => document.visibilityState === "visible" && onFocus();
+    document.addEventListener("visibilitychange", handler);
+    return () => document.removeEventListener("visibilitychange", handler);
+  }, [loadData]);
+
+  const riskChartData = useMemo(() => {
+    return [
+      { name: "High Risk", value: stats.highRiskCount, color: "#ef4444" },
+      { name: "Moderate Risk", value: stats.moderateRiskCount, color: "#eab308" },
+      { name: "Low Risk", value: stats.lowRiskCount, color: "#22c55e" },
+    ].filter((d) => d.value > 0);
+  }, [stats.highRiskCount, stats.moderateRiskCount, stats.lowRiskCount]);
+
+  const reportsByDate = useMemo(() => {
+    return history
+      .slice(0, 10)
+      .map((r) => ({
+        date: new Date(r.testDate).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "2-digit",
+        }),
+        reports: 1,
+        highRisk: r.predictions.filter((p) => p.riskLevel === "High").length,
+      }))
+      .reverse();
+  }, [history]);
 
   return (
     <DashboardLayout>
@@ -120,6 +166,56 @@ export default function UserDashboard() {
             </div>
           </div>
         </div>
+
+        {/* Charts */}
+        {!loading && history.length > 0 && (
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            {riskChartData.length > 0 && (
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Risk Distribution
+                </h3>
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart>
+                    <Pie
+                      data={riskChartData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={80}
+                      paddingAngle={2}
+                      dataKey="value"
+                      nameKey="name"
+                      label={({ name, value }) => `${name}: ${value}`}
+                    >
+                      {riskChartData.map((entry, index) => (
+                        <Cell key={index} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+            {reportsByDate.length > 0 && (
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Recent Reports Overview
+                </h3>
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={reportsByDate} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                    <YAxis allowDecimals={false} />
+                    <Tooltip />
+                    <Bar dataKey="highRisk" name="High risk findings" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Quick Actions */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">

@@ -6,7 +6,7 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 import type { User } from "../types";
-import { mockLogin, mockRegister } from "../services/mockApi";
+import { login as apiLogin, register as apiRegister } from "../services/backend";
 
 interface AuthContextType {
   user: User | null;
@@ -32,13 +32,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const userData = await mockLogin(email, password);
+    const userData = await apiLogin(email, password);
     setUser(userData);
     localStorage.setItem("user", JSON.stringify(userData));
   };
 
   const register = async (name: string, email: string, password: string) => {
-    const userData = await mockRegister(name, email, password);
+    const userData = await apiRegister(name, email, password);
     setUser(userData);
     localStorage.setItem("user", JSON.stringify(userData));
   };

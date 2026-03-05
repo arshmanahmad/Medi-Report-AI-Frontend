@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "../../components/Layout/DashboardLayout";
-import { mockGetHealthHistory } from "../../services/mockApi";
+import { getHealthHistory } from "../../services/backend";
 import type {
   HealthHistory,
   PredictionResult,
@@ -12,10 +12,12 @@ import {
   generateExcelReport,
 } from "../../services/reportGenerator";
 import { useAuth } from "../../contexts/AuthContext";
+import { useDataRefresh } from "../../contexts/DataRefreshContext";
 import { FiDownload, FiFileText, FiFile } from "react-icons/fi";
 
 export default function DownloadReport() {
   const { user } = useAuth();
+  const { refreshKey } = useDataRefresh();
   const [searchParams] = useSearchParams();
   const reportId = searchParams.get("reportId");
   const [history, setHistory] = useState<HealthHistory[]>([]);
@@ -24,23 +26,25 @@ export default function DownloadReport() {
   );
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const loadHistory = async () => {
-      try {
-        const data = await mockGetHealthHistory();
-        setHistory(data);
-        if (reportId) {
-          const report = data.find((r) => r.id === reportId);
-          if (report) setSelectedReport(report);
-        }
-      } catch (error) {
-        console.error("Failed to load history:", error);
-      } finally {
-        setLoading(false);
+  const loadHistory = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getHealthHistory(user?.id);
+      setHistory(data);
+      if (reportId) {
+        const report = data.find((r) => r.id === reportId);
+        setSelectedReport(report ?? null);
       }
-    };
+    } catch (error) {
+      console.error("Failed to load history:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [reportId, user?.id]);
+
+  useEffect(() => {
     loadHistory();
-  }, [reportId]);
+  }, [loadHistory, refreshKey]);
 
   const handleDownloadPDF = () => {
     if (selectedReport && user) {

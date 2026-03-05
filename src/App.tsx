@@ -1,11 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import { DataRefreshProvider } from "./contexts/DataRefreshContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/auth/Home";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import Results from "./pages/Results";
-
 // User Pages
 import UserDashboard from "./pages/user/Dashboard";
 import VerifyReport from "./pages/user/VerifyReport";
@@ -13,7 +13,6 @@ import History from "./pages/user/History";
 import DietTracking from "./pages/user/DietTracking";
 import DownloadReport from "./pages/user/DownloadReport";
 import ProfileSettings from "./pages/user/ProfileSettings";
-
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Users from "./pages/admin/Users";
@@ -22,6 +21,7 @@ import ModelManagement from "./pages/admin/ModelManagement";
 function App() {
   return (
     <AuthProvider>
+      <DataRefreshProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -129,6 +129,7 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
+      </DataRefreshProvider>
     </AuthProvider>
   );
 }

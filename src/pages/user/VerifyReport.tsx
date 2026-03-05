@@ -3,9 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import DashboardLayout from "../../components/Layout/DashboardLayout";
 import type { MedicalTestInput } from "../../types";
-import { generatePredictions } from "../../services/mockApi";
+import { generatePredictions } from "../../services/backend";
 import { NORMAL_RANGES } from "../../utils/constants";
 import { useAuth } from "../../contexts/AuthContext";
+import { useDataRefresh } from "../../contexts/DataRefreshContext";
 import { FiCheckCircle, FiAlertCircle, FiCpu } from "react-icons/fi";
 
 const DISEASE_OPTIONS = [
@@ -21,6 +22,7 @@ const DISEASE_OPTIONS = [
 
 export default function VerifyReport() {
   const { user } = useAuth();
+  const { triggerRefresh } = useDataRefresh();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -91,6 +93,7 @@ export default function VerifyReport() {
       const result = await generatePredictions(data, diseaseToCheck, user?.id);
       sessionStorage.setItem("predictionResult", JSON.stringify(result));
       sessionStorage.setItem("testValues", JSON.stringify(data));
+      triggerRefresh(); // realtime: Dashboard & History refetch
       navigate("/results");
     } catch (err) {
       setError("Failed to generate predictions. Please try again.");

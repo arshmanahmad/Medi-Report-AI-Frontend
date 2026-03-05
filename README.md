@@ -1,3 +1,22 @@
+# Medi Report AI – Frontend
+
+React + TypeScript + Vite app. Connects to the backend for predictions and history.
+
+## Backend connection (env)
+
+Create a `.env` file (or copy from `.env.example`) and set the backend URL:
+
+```bash
+VITE_API_URL=http://localhost:4000
+```
+
+- **Development:** use `http://localhost:4000` when the Express backend is running locally.
+- **Production:** set to your deployed backend URL.
+
+All API calls (predictions, history, auth) use this URL. Data is refetched when you submit a new prediction and when you return to the Dashboard/History tab so the UI stays in sync with the backend.
+
+---
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.

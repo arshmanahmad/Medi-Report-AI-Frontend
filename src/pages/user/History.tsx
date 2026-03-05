@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import DashboardLayout from "../../components/Layout/DashboardLayout";
-import { mockGetHealthHistory } from "../../services/mockApi";
+import { getHealthHistory } from "../../services/backend";
 import type { HealthHistory } from "../../types";
+import { useAuth } from "../../contexts/AuthContext";
+import { useDataRefresh } from "../../contexts/DataRefreshContext";
 import { Link } from "react-router-dom";
 import {
   FiCalendar,
@@ -9,24 +11,81 @@ import {
   FiArrowRight,
   FiDownload,
 } from "react-icons/fi";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Legend,
+  Tooltip,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+} from "recharts";
 
 export default function History() {
+  const { user } = useAuth();
+  const { refreshKey } = useDataRefresh();
   const [history, setHistory] = useState<HealthHistory[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const loadHistory = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getHealthHistory(user?.id);
+      setHistory(data);
+    } catch (error) {
+      console.error("Failed to load history:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
+
   useEffect(() => {
-    const loadHistory = async () => {
-      try {
-        const data = await mockGetHealthHistory();
-        setHistory(data);
-      } catch (error) {
-        console.error("Failed to load history:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadHistory();
-  }, []);
+  }, [loadHistory, refreshKey]);
+
+  // Realtime: refetch when user returns to tab
+  useEffect(() => {
+    const handler = () => document.visibilityState === "visible" && loadHistory();
+    document.addEventListener("visibilitychange", handler);
+    return () => document.removeEventListener("visibilitychange", handler);
+  }, [loadHistory]);
+
+  const riskChartData = useMemo(() => {
+    let high = 0,
+      moderate = 0,
+      low = 0;
+    history.forEach((r) => {
+      r.predictions.forEach((p) => {
+        if (p.riskLevel === "High") high++;
+        else if (p.riskLevel === "Moderate") moderate++;
+        else low++;
+      });
+    });
+    return [
+      { name: "High Risk", value: high, color: "#ef4444" },
+      { name: "Moderate Risk", value: moderate, color: "#eab308" },
+      { name: "Low Risk", value: low, color: "#22c55e" },
+    ].filter((d) => d.value > 0);
+  }, [history]);
+
+  const metricsTrend = useMemo(() => {
+    return history
+      .slice(0, 12)
+      .map((r) => ({
+        date: new Date(r.testDate).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        }),
+        glucose: r.testValues.glucose,
+        hemoglobin: r.testValues.hemoglobin,
+        creatinine: r.testValues.creatinine,
+      }))
+      .reverse();
+  }, [history]);
 
   return (
     <DashboardLayout>
@@ -39,6 +98,58 @@ export default function History() {
             View and manage all your past health reports and analyses.
           </p>
         </div>
+
+        {!loading && history.length > 0 && (riskChartData.length > 0 || metricsTrend.length > 0) && (
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            {riskChartData.length > 0 && (
+              <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Risk Distribution (All Reports)
+                </h3>
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart>
+                    <Pie
+                      data={riskChartData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={80}
+                      paddingAngle={2}
+                      dataKey="value"
+                      nameKey="name"
+                      label={({ name, value }) => `${name}: ${value}`}
+                    >
+                      {riskChartData.map((entry, i) => (
+                        <Cell key={i} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+            {metricsTrend.length > 0 && (
+              <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Key Metrics Over Time
+                </h3>
+                <ResponsiveContainer width="100%" height={220}>
+                  <LineChart data={metricsTrend} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="glucose" name="Glucose (mg/dL)" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} />
+                    <Line type="monotone" dataKey="hemoglobin" name="Hemoglobin (g/dL)" stroke="#22c55e" strokeWidth={2} dot={{ r: 4 }} />
+                    <Line type="monotone" dataKey="creatinine" name="Creatinine (mg/dL)" stroke="#f59e0b" strokeWidth={2} dot={{ r: 4 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+        )}
 
         {loading ? (
           <div className="flex items-center justify-center min-h-[400px]">
