@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import DashboardLayout from "../components/Layout/DashboardLayout";
 import type { PredictionResult, MedicalTestInput, RiskLevel } from "../types";
 import { RISK_LEVEL_COLORS } from "../utils/constants";
@@ -8,6 +8,7 @@ import {
   generateExcelReport,
 } from "../services/reportGenerator";
 import { useAuth } from "../contexts/AuthContext";
+import { getHealthHistoryById } from "../services/backend";
 import {
   FiDownload,
   FiArrowLeft,
@@ -19,22 +20,66 @@ import {
 export default function Results() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const reportId = searchParams.get("reportId");
   const [result, setResult] = useState<PredictionResult | null>(null);
   const [testValues, setTestValues] = useState<MedicalTestInput | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedResult = sessionStorage.getItem("predictionResult");
-    const storedValues = sessionStorage.getItem("testValues");
+    let cancelled = false;
+    (async () => {
+      if (reportId && user?.id) {
+        setLoading(true);
+        const hist = await getHealthHistoryById(reportId, user.id);
+        if (cancelled) return;
+        if (hist?.fullResult && hist.testValues) {
+          setResult(hist.fullResult);
+          setTestValues(hist.testValues);
+          setLoading(false);
+          return;
+        }
+        if (hist?.testValues) {
+          setTestValues(hist.testValues);
+          setResult({
+            predictions: hist.predictions,
+            saltRecommendations: [],
+            dietPlan: {
+              foodsToEat: [],
+              foodsToAvoid: [],
+              healthyRoutines: [],
+              duration: "—",
+            },
+            recoveryTimeline: {
+              estimatedDuration: "—",
+              milestones: [],
+              improvementPercentage: 0,
+            },
+            testDate: hist.testDate,
+            userId: user.id,
+          });
+          setLoading(false);
+          return;
+        }
+        navigate("/history");
+        setLoading(false);
+        return;
+      }
 
-    if (storedResult && storedValues) {
-      setResult(JSON.parse(storedResult));
-      setTestValues(JSON.parse(storedValues));
-    } else {
-      navigate("/verify-report");
-    }
-    setLoading(false);
-  }, [navigate]);
+      const storedResult = sessionStorage.getItem("predictionResult");
+      const storedValues = sessionStorage.getItem("testValues");
+      if (storedResult && storedValues) {
+        setResult(JSON.parse(storedResult));
+        setTestValues(JSON.parse(storedValues));
+      } else {
+        navigate("/verify-report");
+      }
+      setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate, reportId, user?.id]);
 
   const handleDownloadPDF = () => {
     if (result && testValues && user) {

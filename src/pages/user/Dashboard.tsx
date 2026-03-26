@@ -39,7 +39,17 @@ export default function UserDashboard() {
   });
 
   const loadData = useCallback(async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setLoading(false);
+      setHistory([]);
+      setStats({
+        totalReports: 0,
+        highRiskCount: 0,
+        moderateRiskCount: 0,
+        lowRiskCount: 0,
+      });
+      return;
+    }
     setLoading(true);
     try {
       const data = await getHealthHistory(user.id);

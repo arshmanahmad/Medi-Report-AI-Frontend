@@ -2,11 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "../../components/Layout/DashboardLayout";
 import { getHealthHistory } from "../../services/backend";
-import type {
-  HealthHistory,
-  PredictionResult,
-  MedicalTestInput,
-} from "../../types";
+import type { HealthHistory, PredictionResult } from "../../types";
 import {
   generatePDFReport,
   generateExcelReport,
@@ -46,50 +42,47 @@ export default function DownloadReport() {
     loadHistory();
   }, [loadHistory, refreshKey]);
 
+  const resultForDownload = (
+    report: HealthHistory,
+    userId: string
+  ): PredictionResult => {
+    if (report.fullResult) return report.fullResult;
+    return {
+      predictions: report.predictions,
+      saltRecommendations: [],
+      dietPlan: {
+        foodsToEat: [],
+        foodsToAvoid: [],
+        healthyRoutines: [],
+        duration: "—",
+      },
+      recoveryTimeline: {
+        estimatedDuration: "—",
+        milestones: [],
+        improvementPercentage: 0,
+      },
+      testDate: report.testDate,
+      userId,
+    };
+  };
+
   const handleDownloadPDF = () => {
     if (selectedReport && user) {
-      // Convert HealthHistory to PredictionResult format
-      const result: PredictionResult = {
-        predictions: selectedReport.predictions,
-        saltRecommendations: [],
-        dietPlan: {
-          foodsToEat: [],
-          foodsToAvoid: [],
-          healthyRoutines: [],
-          duration: "4-6 weeks",
-        },
-        recoveryTimeline: {
-          estimatedDuration: "4-6 weeks",
-          milestones: [],
-          improvementPercentage: 70,
-        },
-        testDate: selectedReport.testDate,
-        userId: user.id,
-      };
-      generatePDFReport(selectedReport.testValues, result, user.name);
+      generatePDFReport(
+        selectedReport.testValues,
+        resultForDownload(selectedReport, user.id),
+        user.name
+      );
     }
   };
 
   const handleDownloadExcel = () => {
     if (selectedReport && user) {
-      const result: PredictionResult = {
-        predictions: selectedReport.predictions,
-        saltRecommendations: [],
-        dietPlan: {
-          foodsToEat: [],
-          foodsToAvoid: [],
-          healthyRoutines: [],
-          duration: "4-6 weeks",
-        },
-        recoveryTimeline: {
-          estimatedDuration: "4-6 weeks",
-          milestones: [],
-          improvementPercentage: 70,
-        },
-        testDate: selectedReport.testDate,
-        userId: user.id,
-      };
-      generateExcelReport(selectedReport.testValues, result, user.name);
+      generateExcelReport(
+        selectedReport.testValues,
+        resultForDownload(selectedReport, user.id),
+        user.name
+      );
     }
   };
 

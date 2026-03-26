@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import { useSidebarLayout } from "../../contexts/SidebarLayoutContext";
 import {
   FiHome,
   FiFileText,
@@ -10,9 +11,9 @@ import {
   FiUsers,
   FiCpu,
   FiLogOut,
-  FiMenu,
+  FiChevronLeft,
+  FiChevronRight,
 } from "react-icons/fi";
-import { useState } from "react";
 
 interface NavItem {
   path: string;
@@ -25,37 +26,37 @@ const userNavItems: NavItem[] = [
   {
     path: "/dashboard",
     label: "Dashboard",
-    icon: <FiHome className="w-5 h-5" />,
+    icon: <FiHome className="w-5 h-5 shrink-0" />,
     roles: ["user"],
   },
   {
     path: "/verify-report",
     label: "Verify Report",
-    icon: <FiFileText className="w-5 h-5" />,
+    icon: <FiFileText className="w-5 h-5 shrink-0" />,
     roles: ["user"],
   },
   {
     path: "/history",
     label: "History",
-    icon: <FiClock className="w-5 h-5" />,
+    icon: <FiClock className="w-5 h-5 shrink-0" />,
     roles: ["user"],
   },
   {
     path: "/diet-tracking",
     label: "Diet Tracking",
-    icon: <FiActivity className="w-5 h-5" />,
+    icon: <FiActivity className="w-5 h-5 shrink-0" />,
     roles: ["user"],
   },
   {
     path: "/download-report",
     label: "Download Report",
-    icon: <FiDownload className="w-5 h-5" />,
+    icon: <FiDownload className="w-5 h-5 shrink-0" />,
     roles: ["user"],
   },
   {
     path: "/profile-settings",
     label: "Profile Settings",
-    icon: <FiSettings className="w-5 h-5" />,
+    icon: <FiSettings className="w-5 h-5 shrink-0" />,
     roles: ["user"],
   },
 ];
@@ -64,19 +65,19 @@ const adminNavItems: NavItem[] = [
   {
     path: "/admin/dashboard",
     label: "Dashboard",
-    icon: <FiHome className="w-5 h-5" />,
+    icon: <FiHome className="w-5 h-5 shrink-0" />,
     roles: ["admin"],
   },
   {
     path: "/admin/users",
     label: "Users",
-    icon: <FiUsers className="w-5 h-5" />,
+    icon: <FiUsers className="w-5 h-5 shrink-0" />,
     roles: ["admin"],
   },
   {
     path: "/admin/models",
-    label: "Model Management",
-    icon: <FiCpu className="w-5 h-5" />,
+    label: "AI Service",
+    icon: <FiCpu className="w-5 h-5 shrink-0" />,
     roles: ["admin"],
   },
 ];
@@ -84,7 +85,7 @@ const adminNavItems: NavItem[] = [
 export default function Sidebar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const { collapsed, toggleCollapsed, sidebarWidth } = useSidebarLayout();
 
   const handleLogout = () => {
     logout();
@@ -95,62 +96,62 @@ export default function Sidebar() {
 
   return (
     <aside
-      className={`fixed left-0 top-0 h-full bg-white border-r border-gray-200 transition-all duration-300 z-40 ${
-        isCollapsed ? "w-20" : "w-64"
-      }`}
+      className="fixed left-0 top-0 z-40 flex flex-col border-r border-gray-200 bg-white shadow-sm transition-[width] duration-300 ease-in-out"
       style={{
+        width: `${sidebarWidth}px`,
         paddingTop: "var(--header-height)",
         height: "100vh",
       }}
     >
-      <div className="h-full flex flex-col relative">
-        {/* Collapse Toggle */}
+      <div className="flex h-full flex-col">
         <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-3 bg-primary text-white rounded-full p-1.5 shadow-lg hover:bg-primary-dark transition z-50 flex items-center justify-center"
-          style={{
-            top: `calc(var(--header-height) + 20px)`,
-            transform: "translateY(0)",
-          }}
+          type="button"
+          onClick={toggleCollapsed}
+          className="absolute right-0 top-[calc(var(--header-height)+12px)] z-50 flex h-8 w-8 translate-x-1/2 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-md transition hover:bg-primary hover:text-white hover:border-primary"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          <FiMenu className="w-4 h-4" />
+          {collapsed ? (
+            <FiChevronRight className="h-4 w-4" />
+          ) : (
+            <FiChevronLeft className="h-4 w-4" />
+          )}
         </button>
 
-        {/* Navigation Items */}
-        <nav className="flex-1 overflow-y-auto py-4 px-2">
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-4">
           <ul className="space-y-1">
             {navItems.map((item) => (
               <li key={item.path}>
                 <NavLink
                   to={item.path}
+                  end={item.path === "/admin/dashboard" || item.path === "/dashboard"}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                    `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
                       isActive
-                        ? "bg-primary-lighter text-primary font-semibold"
+                        ? "bg-primary-lighter font-semibold text-primary"
                         : "text-gray-700 hover:bg-gray-100"
-                    } ${isCollapsed ? "justify-center" : ""}`
+                    } ${collapsed ? "justify-center px-2" : ""}`
                   }
-                  title={isCollapsed ? item.label : undefined}
+                  title={collapsed ? item.label : undefined}
                 >
-                  <span className="flex-shrink-0">{item.icon}</span>
-                  {!isCollapsed && <span>{item.label}</span>}
+                  {item.icon}
+                  {!collapsed && <span className="truncate">{item.label}</span>}
                 </NavLink>
               </li>
             ))}
           </ul>
         </nav>
 
-        {/* Logout Button */}
-        <div className="p-4 border-t border-gray-200">
+        <div className="border-t border-gray-200 p-3">
           <button
+            type="button"
             onClick={handleLogout}
-            className={`flex items-center gap-3 w-full px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors ${
-              isCollapsed ? "justify-center" : ""
+            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-red-600 transition-colors hover:bg-red-50 ${
+              collapsed ? "justify-center" : ""
             }`}
-            title={isCollapsed ? "Logout" : undefined}
+            title={collapsed ? "Logout" : undefined}
           >
-            <FiLogOut className="w-5 h-5" />
-            {!isCollapsed && <span>Logout</span>}
+            <FiLogOut className="h-5 w-5 shrink-0" />
+            {!collapsed && <span>Logout</span>}
           </button>
         </div>
       </div>

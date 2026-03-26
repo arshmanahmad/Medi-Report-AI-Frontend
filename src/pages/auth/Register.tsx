@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import AuthLayout from "../../components/Layout/AuthLayout";
+import { getApiErrorMessage } from "../../services/api";
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -21,7 +22,9 @@ export default function Register() {
       await register(name, email, password);
       navigate("/dashboard");
     } catch (err) {
-      setError("Registration failed. Please try again.");
+      setError(
+        getApiErrorMessage(err, "Registration failed. Is the backend running?")
+      );
     } finally {
       setLoading(false);
     }

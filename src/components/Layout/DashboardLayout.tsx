@@ -1,22 +1,16 @@
 import type { ReactNode } from "react";
-import { useState, useEffect } from "react";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import { useAuth } from "../../contexts/AuthContext";
+import { SidebarLayoutProvider, useSidebarLayout } from "../../contexts/SidebarLayoutContext";
 
 interface DashboardLayoutProps {
   children: ReactNode;
 }
 
-export default function DashboardLayout({ children }: DashboardLayoutProps) {
+function DashboardShell({ children }: DashboardLayoutProps) {
   const { user } = useAuth();
-  const [sidebarWidth, setSidebarWidth] = useState(260);
-
-  useEffect(() => {
-    // Listen for sidebar collapse state from localStorage or context
-    const stored = localStorage.getItem("sidebarCollapsed");
-    setSidebarWidth(stored === "true" ? 80 : 260);
-  }, []);
+  const { sidebarWidth } = useSidebarLayout();
 
   if (!user) {
     return null;
@@ -27,15 +21,23 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <Header />
       <Sidebar />
       <main
-        className="transition-all duration-300"
+        className="transition-[margin-left] duration-300 ease-in-out"
         style={{
-          marginLeft: "260px", // Default sidebar width
+          marginLeft: `${sidebarWidth}px`,
           paddingTop: "var(--header-height)",
           minHeight: "calc(100vh - var(--header-height))",
         }}
       >
-        <div className="p-6">{children}</div>
+        <div className="p-6 max-w-[1600px] mx-auto">{children}</div>
       </main>
     </div>
+  );
+}
+
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
+  return (
+    <SidebarLayoutProvider>
+      <DashboardShell>{children}</DashboardShell>
+    </SidebarLayoutProvider>
   );
 }

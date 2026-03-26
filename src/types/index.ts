@@ -82,4 +82,6 @@ export interface HealthHistory {
   testDate: string;
   predictions: DiseasePrediction[];
   testValues: MedicalTestInput;
+  /** Full report when loaded from backend history */
+  fullResult?: PredictionResult;
 }

@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import DashboardLayout from "../../components/Layout/DashboardLayout";
 import type { MedicalTestInput } from "../../types";
 import { generatePredictions } from "../../services/backend";
+import { getApiErrorMessage } from "../../services/api";
 import { NORMAL_RANGES } from "../../utils/constants";
 import { useAuth } from "../../contexts/AuthContext";
 import { useDataRefresh } from "../../contexts/DataRefreshContext";
@@ -96,7 +97,12 @@ export default function VerifyReport() {
       triggerRefresh(); // realtime: Dashboard & History refetch
       navigate("/results");
     } catch (err) {
-      setError("Failed to generate predictions. Please try again.");
+      setError(
+        getApiErrorMessage(
+          err,
+          "Prediction failed. Ensure the backend and Python AI service are running."
+        )
+      );
       console.error(err);
     } finally {
       setLoading(false);

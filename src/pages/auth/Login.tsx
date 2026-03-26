@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import AuthLayout from "../../components/Layout/AuthLayout";
+import { getApiErrorMessage } from "../../services/api";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -21,7 +22,9 @@ export default function Login() {
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       navigate(user.role === "admin" ? "/admin/dashboard" : "/dashboard");
     } catch (err) {
-      setError("Invalid email or password");
+      setError(
+        getApiErrorMessage(err, "Invalid email or password. Is the backend running?")
+      );
     } finally {
       setLoading(false);
     }

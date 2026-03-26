@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "../../components/Layout/DashboardLayout";
 import { FiCheckCircle, FiClock, FiXCircle, FiPlus } from "react-icons/fi";
 
@@ -11,41 +11,29 @@ interface DietEntry {
   date: string;
 }
 
+const DIET_STORAGE_KEY = "medi-diet-entries";
+
+function loadDietEntries(): DietEntry[] {
+  try {
+    const raw = localStorage.getItem(DIET_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? (parsed as DietEntry[]) : [];
+  } catch {
+    return [];
+  }
+}
+
 export default function DietTracking() {
-  const [entries, setEntries] = useState<DietEntry[]>([
-    {
-      id: "1",
-      type: "medicine",
-      name: "Metformin 500mg",
-      time: "08:00",
-      status: "completed",
-      date: new Date().toISOString().split("T")[0],
-    },
-    {
-      id: "2",
-      type: "diet",
-      name: "Breakfast",
-      time: "08:30",
-      status: "completed",
-      date: new Date().toISOString().split("T")[0],
-    },
-    {
-      id: "3",
-      type: "medicine",
-      name: "Aspirin 75mg",
-      time: "12:00",
-      status: "pending",
-      date: new Date().toISOString().split("T")[0],
-    },
-    {
-      id: "4",
-      type: "diet",
-      name: "Lunch",
-      time: "13:00",
-      status: "pending",
-      date: new Date().toISOString().split("T")[0],
-    },
-  ]);
+  const [entries, setEntries] = useState<DietEntry[]>(loadDietEntries);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(DIET_STORAGE_KEY, JSON.stringify(entries));
+    } catch {
+      /* ignore */
+    }
+  }, [entries]);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [newEntry, setNewEntry] = useState({
@@ -92,8 +80,8 @@ export default function DietTracking() {
             Diet & Medicine Tracking
           </h1>
           <p className="text-gray-600">
-            Track your daily medicine intake and diet to monitor your health
-            progress.
+            Track medicine and meals on this device. Data is saved in your
+            browser (not sent to the server).
           </p>
         </div>
 
