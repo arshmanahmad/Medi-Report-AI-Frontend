@@ -75,6 +75,11 @@ export interface PredictionResult {
   recoveryTimeline: RecoveryTimeline;
   testDate: string;
   userId?: string;
+  mlOverallRisk?: string;
+  learning?: {
+    trainingSamplesLogged: number;
+    mlModelActive: boolean;
+  };
 }
 
 export interface HealthHistory {

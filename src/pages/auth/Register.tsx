@@ -32,32 +32,32 @@ export default function Register() {
 
   return (
     <AuthLayout>
-      <div className="bg-white p-8 rounded-lg shadow-md">
-        <h2 className="text-3xl font-bold text-center mb-6">Create Account</h2>
+      <div className="rounded-lg bg-white p-8 shadow-md">
+        <h2 className="mb-6 text-center text-3xl font-bold">Create account</h2>
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Full Name
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Full name
             </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-primary"
               placeholder="John Doe"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="mb-1 block text-sm font-medium text-gray-700">
               Email
             </label>
             <input
@@ -65,13 +65,13 @@ export default function Register() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-primary"
               placeholder="your.email@example.com"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="mb-1 block text-sm font-medium text-gray-700">
               Password
             </label>
             <input
@@ -80,7 +80,7 @@ export default function Register() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-primary"
               placeholder="At least 6 characters"
             />
           </div>
@@ -88,9 +88,9 @@ export default function Register() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary text-white py-2 rounded-lg font-semibold hover:bg-primary-dark transition disabled:opacity-50"
+            className="w-full rounded-lg bg-primary py-2 font-semibold text-white transition hover:bg-primary-dark disabled:opacity-50"
           >
-            {loading ? "Creating account..." : "Sign Up"}
+            {loading ? "Creating account..." : "Sign up"}
           </button>
         </form>
 

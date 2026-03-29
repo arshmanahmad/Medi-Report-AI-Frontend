@@ -7,11 +7,33 @@ import type {
   HealthHistory,
 } from "../types";
 
+/** Persisted JWT (signed-in users only). */
+export const AUTH_TOKEN_KEY = "auth_token";
+/** When set to `demo`, requests use X-Demo-Mode (no JWT). */
+export const APP_MODE_KEY = "app_mode";
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
   headers: { "Content-Type": "application/json" },
 });
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  const mode = localStorage.getItem(APP_MODE_KEY);
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+    delete config.headers["X-Demo-Mode"];
+  } else if (mode === "demo") {
+    config.headers["X-Demo-Mode"] = "true";
+  }
+  return config;
+});
+
+export type AuthResponse = {
+  user: User;
+  token: string;
+};
 
 export function getApiErrorMessage(err: unknown, fallback: string): string {
   const ax = err as AxiosError<{ error?: string; details?: string }>;
@@ -24,40 +46,39 @@ export function getApiErrorMessage(err: unknown, fallback: string): string {
 
 export async function getPrediction(
   testValues: MedicalTestInput,
-  selectedDisease?: string,
-  userId?: string
+  selectedDisease?: string
 ): Promise<PredictionResult> {
   const { data } = await api.post<PredictionResult>("/api/predict", {
     testValues,
     selectedDisease: selectedDisease || undefined,
-    userId: userId || undefined,
   });
   return data;
 }
 
-export async function getHealthHistory(userId?: string): Promise<HealthHistory[]> {
-  const { data } = await api.get<HealthHistory[]>("/api/history", {
-    params: { userId: userId || "default" },
-  });
+export async function getHealthHistory(): Promise<HealthHistory[]> {
+  const { data } = await api.get<HealthHistory[]>("/api/history");
   return data;
 }
 
 export async function getHealthHistoryById(
-  reportId: string,
-  userId?: string
+  reportId: string
 ): Promise<HealthHistory | null> {
   try {
-    const { data } = await api.get<HealthHistory>(`/api/history/${reportId}`, {
-      params: { userId: userId || "default" },
-    });
+    const { data } = await api.get<HealthHistory>(`/api/history/${reportId}`);
     return data;
   } catch {
     return null;
   }
 }
 
-export async function login(email: string, password: string): Promise<User> {
-  const { data } = await api.post<User>("/api/auth/login", { email, password });
+export async function login(
+  email: string,
+  password: string
+): Promise<AuthResponse> {
+  const { data } = await api.post<AuthResponse>("/api/auth/login", {
+    email,
+    password,
+  });
   return data;
 }
 
@@ -65,8 +86,8 @@ export async function register(
   name: string,
   email: string,
   password: string
-): Promise<User> {
-  const { data } = await api.post<User>("/api/auth/register", {
+): Promise<AuthResponse> {
+  const { data } = await api.post<AuthResponse>("/api/auth/register", {
     name,
     email,
     password,

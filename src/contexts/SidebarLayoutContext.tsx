@@ -12,10 +12,17 @@ const STORAGE_KEY = "medi-sidebar-collapsed";
 const COLLAPSED_WIDTH = 80;
 const EXPANDED_WIDTH = 256;
 
+/** Matches Tailwind `md` (768px): at this width and below, sidebar stays narrow. */
+const NARROW_MEDIA_QUERY = "(max-width: 767px)";
+
 type SidebarLayoutContextType = {
   collapsed: boolean;
   setCollapsed: (value: boolean) => void;
   toggleCollapsed: () => void;
+  /** True when the viewport is narrow; sidebar is forced to collapsed width. */
+  isNarrowScreen: boolean;
+  /** User preference OR narrow screen — use for icon-only vs labels. */
+  effectiveCollapsed: boolean;
   sidebarWidth: number;
 };
 
@@ -31,7 +38,24 @@ export function SidebarLayoutProvider({ children }: { children: ReactNode }) {
       return false;
     }
   });
-  const sidebarWidth = collapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH;
+
+  const [isNarrowScreen, setIsNarrowScreen] = useState(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia(NARROW_MEDIA_QUERY).matches
+      : false
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia(NARROW_MEDIA_QUERY);
+    const onChange = () => setIsNarrowScreen(mq.matches);
+    setIsNarrowScreen(mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  const effectiveCollapsed = collapsed || isNarrowScreen;
+  const sidebarWidth = effectiveCollapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH;
+
   const toggleCollapsed = useCallback(() => {
     setCollapsed((c) => !c);
   }, []);
@@ -50,6 +74,8 @@ export function SidebarLayoutProvider({ children }: { children: ReactNode }) {
         collapsed,
         setCollapsed,
         toggleCollapsed,
+        isNarrowScreen,
+        effectiveCollapsed,
         sidebarWidth,
       }}
     >

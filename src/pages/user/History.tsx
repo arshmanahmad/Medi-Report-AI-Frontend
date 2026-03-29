@@ -34,7 +34,7 @@ export default function History() {
   const loadHistory = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getHealthHistory(user?.id);
+      const data = await getHealthHistory();
       setHistory(data);
     } catch (error) {
       console.error("Failed to load history:", error);

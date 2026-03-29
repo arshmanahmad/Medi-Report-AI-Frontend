@@ -25,7 +25,7 @@ export default function DownloadReport() {
   const loadHistory = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getHealthHistory(user?.id);
+      const data = await getHealthHistory();
       setHistory(data);
       if (reportId) {
         const report = data.find((r) => r.id === reportId);

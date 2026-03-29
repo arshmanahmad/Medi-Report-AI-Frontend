@@ -31,7 +31,7 @@ export default function Results() {
     (async () => {
       if (reportId && user?.id) {
         setLoading(true);
-        const hist = await getHealthHistoryById(reportId, user.id);
+        const hist = await getHealthHistoryById(reportId);
         if (cancelled) return;
         if (hist?.fullResult && hist.testValues) {
           setResult(hist.fullResult);

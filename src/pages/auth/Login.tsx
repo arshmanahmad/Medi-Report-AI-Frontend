@@ -18,12 +18,14 @@ export default function Login() {
     setLoading(true);
 
     try {
-      await login(email, password);
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const user = await login(email, password);
       navigate(user.role === "admin" ? "/admin/dashboard" : "/dashboard");
     } catch (err) {
       setError(
-        getApiErrorMessage(err, "Invalid email or password. Is the backend running?")
+        getApiErrorMessage(
+          err,
+          "Invalid email or password. Is the backend running?"
+        )
       );
     } finally {
       setLoading(false);
@@ -32,18 +34,18 @@ export default function Login() {
 
   return (
     <AuthLayout>
-      <div className="bg-white p-8 rounded-lg shadow-md">
-        <h2 className="text-3xl font-bold text-center mb-6">Login</h2>
+      <div className="rounded-lg bg-white p-8 shadow-md">
+        <h2 className="mb-6 text-center text-3xl font-bold">Login</h2>
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="mb-1 block text-sm font-medium text-gray-700">
               Email
             </label>
             <input
@@ -51,13 +53,13 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-primary"
               placeholder="your.email@example.com"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="mb-1 block text-sm font-medium text-gray-700">
               Password
             </label>
             <input
@@ -65,7 +67,7 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-primary"
               placeholder="Enter your password"
             />
           </div>
@@ -73,14 +75,14 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary text-white py-2 rounded-lg font-semibold hover:bg-primary-dark transition disabled:opacity-50"
+            className="w-full rounded-lg bg-primary py-2 font-semibold text-white transition hover:bg-primary-dark disabled:opacity-50"
           >
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 
         <p className="mt-4 text-center text-gray-600">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link to="/register" className="text-primary hover:underline">
             Sign up
           </Link>

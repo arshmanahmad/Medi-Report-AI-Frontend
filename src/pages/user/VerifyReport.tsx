@@ -1,12 +1,15 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import DashboardLayout from "../../components/Layout/DashboardLayout";
 import type { MedicalTestInput } from "../../types";
 import { generatePredictions } from "../../services/backend";
 import { getApiErrorMessage } from "../../services/api";
-import { NORMAL_RANGES } from "../../utils/constants";
-import { useAuth } from "../../contexts/AuthContext";
+import {
+  DEFAULT_MEDICAL_TEST_VALUES,
+  getVisibleFieldKeys,
+  NORMAL_RANGES,
+} from "../../utils/constants";
 import { useDataRefresh } from "../../contexts/DataRefreshContext";
 import { FiCheckCircle, FiAlertCircle, FiCpu } from "react-icons/fi";
 
@@ -21,8 +24,31 @@ const DISEASE_OPTIONS = [
   "All Diseases",
 ];
 
+const TEST_FIELD_DEFS: Array<{
+  key: keyof MedicalTestInput;
+  label: string;
+  category: string;
+}> = [
+  { key: "glucose", label: "Glucose", category: "Basic Metabolic" },
+  { key: "urea", label: "Urea", category: "Basic Metabolic" },
+  { key: "creatinine", label: "Creatinine", category: "Basic Metabolic" },
+  { key: "sodium", label: "Sodium", category: "Basic Metabolic" },
+  { key: "potassium", label: "Potassium", category: "Basic Metabolic" },
+  { key: "hemoglobin", label: "Hemoglobin", category: "Blood Count" },
+  { key: "platelets", label: "Platelets", category: "Blood Count" },
+  { key: "wbc", label: "White Blood Cells (WBC)", category: "Blood Count" },
+  { key: "rbc", label: "Red Blood Cells (RBC)", category: "Blood Count" },
+  { key: "alt", label: "ALT", category: "Liver Function" },
+  { key: "ast", label: "AST", category: "Liver Function" },
+  { key: "bilirubin", label: "Bilirubin", category: "Liver Function" },
+  { key: "albumin", label: "Albumin", category: "Liver Function" },
+  { key: "cholesterol", label: "Total Cholesterol", category: "Lipid Panel" },
+  { key: "hdl", label: "HDL Cholesterol", category: "Lipid Panel" },
+  { key: "ldl", label: "LDL Cholesterol", category: "Lipid Panel" },
+  { key: "triglycerides", label: "Triglycerides", category: "Lipid Panel" },
+];
+
 export default function VerifyReport() {
-  const { user } = useAuth();
   const { triggerRefresh } = useDataRefresh();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -34,66 +60,26 @@ export default function VerifyReport() {
     handleSubmit,
     formState: { errors },
     watch,
+    getValues,
   } = useForm<MedicalTestInput>({
-    defaultValues: {
-      glucose: 95,
-      urea: 25,
-      creatinine: 0.9,
-      hemoglobin: 14.5,
-      platelets: 250000,
-      wbc: 7000,
-      rbc: 4.5,
-      alt: 30,
-      ast: 28,
-      bilirubin: 0.8,
-      albumin: 4.2,
-      sodium: 140,
-      potassium: 4.0,
-      cholesterol: 180,
-      hdl: 55,
-      ldl: 110,
-      triglycerides: 120,
-    },
+    defaultValues: DEFAULT_MEDICAL_TEST_VALUES,
+    shouldUnregister: false,
   });
 
-  const testFields: Array<{
-    key: keyof MedicalTestInput;
-    label: string;
-    category: string;
-  }> = [
-    { key: "glucose", label: "Glucose", category: "Basic Metabolic" },
-    { key: "urea", label: "Urea", category: "Basic Metabolic" },
-    { key: "creatinine", label: "Creatinine", category: "Basic Metabolic" },
-    { key: "sodium", label: "Sodium", category: "Basic Metabolic" },
-    { key: "potassium", label: "Potassium", category: "Basic Metabolic" },
-    { key: "hemoglobin", label: "Hemoglobin", category: "Blood Count" },
-    { key: "platelets", label: "Platelets", category: "Blood Count" },
-    { key: "wbc", label: "White Blood Cells (WBC)", category: "Blood Count" },
-    { key: "rbc", label: "Red Blood Cells (RBC)", category: "Blood Count" },
-    { key: "alt", label: "ALT", category: "Liver Function" },
-    { key: "ast", label: "AST", category: "Liver Function" },
-    { key: "bilirubin", label: "Bilirubin", category: "Liver Function" },
-    { key: "albumin", label: "Albumin", category: "Liver Function" },
-    { key: "cholesterol", label: "Total Cholesterol", category: "Lipid Panel" },
-    { key: "hdl", label: "HDL Cholesterol", category: "Lipid Panel" },
-    { key: "ldl", label: "LDL Cholesterol", category: "Lipid Panel" },
-    {
-      key: "triglycerides",
-      label: "Triglycerides",
-      category: "Lipid Panel",
-    },
-  ];
-
-  const onSubmit = async (data: MedicalTestInput) => {
+  const onSubmit = async () => {
     setLoading(true);
     setError("");
 
     try {
+      const merged: MedicalTestInput = {
+        ...DEFAULT_MEDICAL_TEST_VALUES,
+        ...getValues(),
+      };
       const diseaseToCheck =
         selectedDisease === "All Diseases" ? undefined : selectedDisease;
-      const result = await generatePredictions(data, diseaseToCheck, user?.id);
+      const result = await generatePredictions(merged, diseaseToCheck);
       sessionStorage.setItem("predictionResult", JSON.stringify(result));
-      sessionStorage.setItem("testValues", JSON.stringify(data));
+      sessionStorage.setItem("testValues", JSON.stringify(merged));
       triggerRefresh(); // realtime: Dashboard & History refetch
       navigate("/results");
     } catch (err) {
@@ -169,13 +155,17 @@ export default function VerifyReport() {
     );
   };
 
-  const groupedFields = testFields.reduce((acc, field) => {
-    if (!acc[field.category]) {
-      acc[field.category] = [];
-    }
-    acc[field.category].push(field);
-    return acc;
-  }, {} as Record<string, typeof testFields>);
+  const groupedFields = useMemo(() => {
+    const visibleKeys = getVisibleFieldKeys(selectedDisease);
+    const visible = TEST_FIELD_DEFS.filter((f) => visibleKeys.has(f.key));
+    return visible.reduce((acc, field) => {
+      if (!acc[field.category]) {
+        acc[field.category] = [];
+      }
+      acc[field.category].push(field);
+      return acc;
+    }, {} as Record<string, typeof TEST_FIELD_DEFS>);
+  }, [selectedDisease]);
 
   return (
     <DashboardLayout>
@@ -189,8 +179,10 @@ export default function VerifyReport() {
             AI Disease Classification System
           </h1>
           <p className="text-gray-600">
-            Input your blood test values step by step to get AI-powered disease
-            classification and recommendations
+            Choose a disease, then enter only the lab values shown below (they
+            start at typical reference numbers—replace with your report
+            values). For a full panel check, select <strong>All Diseases</strong>
+            .
           </p>
         </div>
 
@@ -217,6 +209,13 @@ export default function VerifyReport() {
           <p className="mt-4 text-sm text-gray-600">
             Selected: <span className="font-semibold">{selectedDisease}</span>
           </p>
+          {selectedDisease !== "All Diseases" && (
+            <p className="mt-2 text-sm text-gray-500">
+              Showing markers used for <strong>{selectedDisease}</strong> only.
+              Other tests are not required for this check and use reference
+              defaults in the saved report.
+            </p>
+          )}
         </div>
 
         {error && (

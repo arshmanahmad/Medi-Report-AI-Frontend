@@ -3,7 +3,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { FiUser, FiMail, FiCalendar } from "react-icons/fi";
 
 export default function ProfileSettings() {
-  const { user } = useAuth();
+  const { user, isDemo } = useAuth();
 
   return (
     <DashboardLayout>
@@ -11,7 +11,9 @@ export default function ProfileSettings() {
         <div className="mb-8">
           <h1 className="mb-2 text-3xl font-bold text-gray-900">Profile</h1>
           <p className="text-gray-600">
-            Your account comes from the backend API (login / register).
+            {isDemo
+              ? "Preview mode uses a shared demo workspace. Create an account for a personal profile and JWT-secured API access."
+              : "Your account is authenticated with the backend; API requests include your session token."}
           </p>
         </div>
 

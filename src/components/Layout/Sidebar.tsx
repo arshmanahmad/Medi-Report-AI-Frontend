@@ -83,11 +83,22 @@ const adminNavItems: NavItem[] = [
 ];
 
 export default function Sidebar() {
-  const { user, logout } = useAuth();
+  const { user, logout, isDemo, exitDemo } = useAuth();
   const navigate = useNavigate();
-  const { collapsed, toggleCollapsed, sidebarWidth } = useSidebarLayout();
+  const {
+    collapsed,
+    toggleCollapsed,
+    sidebarWidth,
+    isNarrowScreen,
+    effectiveCollapsed,
+  } = useSidebarLayout();
 
   const handleLogout = () => {
+    if (isDemo) {
+      exitDemo();
+      navigate("/");
+      return;
+    }
     logout();
     navigate("/login");
   };
@@ -96,62 +107,69 @@ export default function Sidebar() {
 
   return (
     <aside
-      className="fixed left-0 top-0 z-40 flex flex-col border-r border-gray-200 bg-white shadow-sm transition-[width] duration-300 ease-in-out"
+      className="fixed left-0 z-40 flex flex-col border-r border-gray-200 bg-white shadow-sm transition-[width] duration-300 ease-in-out"
       style={{
         width: `${sidebarWidth}px`,
-        paddingTop: "var(--header-height)",
-        height: "100vh",
+        top: "var(--header-height)",
+        height: "calc(100vh - var(--header-height))",
       }}
     >
-      <div className="flex h-full flex-col">
-        <button
-          type="button"
-          onClick={toggleCollapsed}
-          className="absolute right-0 top-[calc(var(--header-height)+12px)] z-50 flex h-8 w-8 translate-x-1/2 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-md transition hover:bg-primary hover:text-white hover:border-primary"
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {collapsed ? (
-            <FiChevronRight className="h-4 w-4" />
-          ) : (
-            <FiChevronLeft className="h-4 w-4" />
-          )}
-        </button>
-
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-4">
-          <ul className="space-y-1">
+      <div className="flex h-full min-h-0 flex-col">
+        <nav className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-2 pt-2 pb-1">
+          <ul className="space-y-0.5">
             {navItems.map((item) => (
               <li key={item.path}>
                 <NavLink
                   to={item.path}
                   end={item.path === "/admin/dashboard" || item.path === "/dashboard"}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                    `flex items-center gap-3 rounded-lg py-3.5 text-sm transition-colors ${
                       isActive
                         ? "bg-primary-lighter font-semibold text-primary"
                         : "text-gray-700 hover:bg-gray-100"
-                    } ${collapsed ? "justify-center px-2" : ""}`
+                    } ${effectiveCollapsed ? "justify-center px-2" : "px-3"}`
                   }
-                  title={collapsed ? item.label : undefined}
+                  title={effectiveCollapsed ? item.label : undefined}
                 >
-                  {item.icon}
-                  {!collapsed && <span className="truncate">{item.label}</span>}
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center [&>svg]:block">
+                    {item.icon}
+                  </span>
+                  {!effectiveCollapsed && <span className="min-w-0 truncate">{item.label}</span>}
                 </NavLink>
               </li>
             ))}
           </ul>
         </nav>
 
-        <div className="border-t border-gray-200 p-3">
+        <div className="shrink-0 space-y-1 border-t border-gray-200 p-2">
+          {!isNarrowScreen && (
+            <button
+              type="button"
+              onClick={toggleCollapsed}
+              className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm text-gray-600 transition-colors hover:bg-gray-100 ${
+                collapsed ? "justify-center px-2" : ""
+              }`}
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {collapsed ? (
+                <FiChevronRight className="h-5 w-5 shrink-0" />
+              ) : (
+                <FiChevronLeft className="h-5 w-5 shrink-0" />
+              )}
+              {!collapsed && <span className="truncate">Collapse</span>}
+            </button>
+          )}
           <button
             type="button"
             onClick={handleLogout}
-            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-red-600 transition-colors hover:bg-red-50 ${
-              collapsed ? "justify-center" : ""
+            className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm text-red-600 transition-colors hover:bg-red-50 ${
+              effectiveCollapsed ? "justify-center px-2" : ""
             }`}
-            title={collapsed ? "Logout" : undefined}
+            title={effectiveCollapsed ? (isDemo ? "Exit demo" : "Logout") : undefined}
           >
             <FiLogOut className="h-5 w-5 shrink-0" />
-            {!collapsed && <span>Logout</span>}
+            {!effectiveCollapsed && <span>{isDemo ? "Exit demo" : "Logout"}</span>}
           </button>
         </div>
       </div>

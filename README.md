@@ -62,7 +62,7 @@ pip install -r requirements.txt
 python app.py
 ```
 
-By default the Flask app runs at **http://127.0.0.1:5000**. Keep this terminal open.
+By default the Flask app runs at **http://127.0.0.1:5001** (port **5000** is avoided because PostgreSQL often uses it on Windows). Keep this terminal open.
 
 (Optional) To retrain the ML model later: add labeled samples to `data/training_data.json`, then run `python train_model.py`.)
 
@@ -79,16 +79,26 @@ cd Medi-Report-AI-Backend
 npm install
 ```
 
+### Seed default user + admin
+
+Creates or updates **`john.doe@example.com`** (user) and **`admin@example.com`** (admin) in `data/app-state.json` (merge by email; existing history is kept). Optional env: `SEED_USER_PASSWORD`, `SEED_ADMIN_PASSWORD` (defaults: `user12345`, `admin12345`).
+
+```bash
+npm run seed
+```
+
+Restart the backend after seeding so it reloads users from disk.
+
 ### Run (development)
 
 ```bash
 npm run dev
 ```
 
-Backend runs at **http://localhost:4000** by default. It expects the AI service at **http://127.0.0.1:5000**. To use another URL:
+Backend runs at **http://localhost:4000** by default. It expects the AI service at **http://127.0.0.1:5001**. To use another URL:
 
 ```bash
-set AI_SERVICE_URL=http://127.0.0.1:5000
+set AI_SERVICE_URL=http://127.0.0.1:5001
 npm run dev
 ```
 
@@ -162,7 +172,7 @@ npm run preview
    npm run dev
    ```
 
-4. Open **http://localhost:5173** in the browser. Log in (e.g. `admin@example.com` / any password for admin, or `john.doe@example.com` for user), go to **Verify Report**, enter test values, select a disease (or “All Diseases”), and run the prediction.
+4. Open **http://localhost:5173** in the browser. Log in with seeded accounts: **`john.doe@example.com` / `user12345`** (user) or **`admin@example.com` / `admin12345`** (admin). Data persists in `Medi-Report-AI-Backend/data/app-state.json` while the backend runs. Then go to **Verify Report**, enter test values, select a disease (or “All Diseases”), and run the prediction.
 
 ---
 
@@ -220,5 +230,5 @@ Ensure each folder’s `.gitignore` is updated so `venv`, `node_modules`, and bu
 ## Notes
 
 - Predictions are for **informational use** only; they do not replace a doctor’s diagnosis.
-- Auth and history are in-memory in the backend for demo purposes; use a database and proper auth in production.
-- To improve the model over time: add rows to `ai-services/data/training_data.json` (with `test_values` and `risk_level` or `overall_risk`), then run `python train_model.py` in `ai-services`.
+- Auth uses **hashed passwords**; users and prediction **history** are stored on disk (`data/app-state.json`). For production, use a real database and hardened auth.
+- **Learning:** Each prediction appends a weak label to `ai-services/data/training_data.json`. After enough rows, retraining can run automatically (see `ai-services/learning.py`). You can still run `python train_model.py` manually in `ai-services`.

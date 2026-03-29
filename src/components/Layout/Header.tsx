@@ -3,7 +3,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { FiUser } from "react-icons/fi";
 
 export default function Header() {
-  const { user } = useAuth();
+  const { user, isDemo } = useAuth();
 
   return (
     <header
@@ -24,6 +24,11 @@ export default function Header() {
         </Link>
 
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          {isDemo && (
+            <span className="hidden rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-900 sm:inline">
+              Demo · not saved to your account
+            </span>
+          )}
           <div className="flex max-w-[200px] items-center gap-2 rounded-lg bg-gray-50 px-2 py-1.5 sm:max-w-none sm:px-3 sm:py-2">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary">
               <FiUser className="h-4 w-4 text-white" />
@@ -31,7 +36,7 @@ export default function Header() {
             <div className="min-w-0 text-left text-sm">
               <p className="truncate font-medium text-gray-800">{user?.name}</p>
               <p className="truncate text-xs capitalize text-gray-500">
-                {user?.role}
+                {isDemo ? "preview" : user?.role}
               </p>
             </div>
           </div>

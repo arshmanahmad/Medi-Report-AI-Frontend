@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { DataRefreshProvider } from "./contexts/DataRefreshContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
 import Home from "./pages/auth/Home";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
@@ -85,29 +86,29 @@ function App() {
             }
           />
 
-          {/* Admin Routes */}
+          {/* Admin Routes — JWT only; demo cannot access */}
           <Route
             path="/admin/dashboard"
             element={
-              <ProtectedRoute>
+              <AdminRoute>
                 <AdminDashboard />
-              </ProtectedRoute>
+              </AdminRoute>
             }
           />
           <Route
             path="/admin/users"
             element={
-              <ProtectedRoute>
+              <AdminRoute>
                 <Users />
-              </ProtectedRoute>
+              </AdminRoute>
             }
           />
           <Route
             path="/admin/models"
             element={
-              <ProtectedRoute>
+              <AdminRoute>
                 <ModelManagement />
-              </ProtectedRoute>
+              </AdminRoute>
             }
           />
 
@@ -132,5 +133,4 @@ function App() {
     </AuthProvider>
   );
 }
-
 export default App;

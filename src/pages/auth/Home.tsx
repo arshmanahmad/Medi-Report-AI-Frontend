@@ -1,134 +1,138 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import LandingHeader from "../../components/Layout/LandingHeader";
 import { FiActivity, FiShield, FiFileText, FiTrendingUp } from "react-icons/fi";
-import Layout from "../../components/Layout/Layout";
 
 export default function Home() {
-  const { user } = useAuth();
+  const { isAuthenticated, isDemo, user } = useAuth();
+
+  const showHeroCta =
+    !isAuthenticated && !isDemo ? (
+      <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+        <Link
+          to="/login"
+          className="inline-flex min-w-[160px] items-center justify-center rounded-lg bg-primary px-8 py-3 text-lg font-semibold text-white transition hover:bg-primary-dark"
+        >
+          Login
+        </Link>
+        <Link
+          to="/register"
+          className="inline-flex min-w-[160px] items-center justify-center rounded-lg border-2 border-primary bg-white px-8 py-3 text-lg font-semibold text-primary transition hover:bg-primary-lighter"
+        >
+          Sign up
+        </Link>
+      </div>
+    ) : (
+      <Link
+        to={
+          user?.role === "admin" ? "/admin/dashboard" : "/dashboard"
+        }
+        className="inline-block rounded-lg bg-primary px-8 py-3 text-lg font-semibold text-white transition hover:bg-primary-dark"
+      >
+        Go to dashboard
+      </Link>
+    );
 
   return (
-    <Layout>
-      <div className="max-w-6xl mx-auto">
-        {/* Hero Section */}
-        <div className="text-center py-16">
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">
-            AI-Powered Early Disease Prediction
-          </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Understand your medical test results instantly. Get personalized
-            health insights, recommendations, and early disease predictions
-            powered by advanced machine learning.
-          </p>
-          {!user ? (
-            <div className="flex justify-center space-x-4">
-              <Link
-                to="/register"
-                className="bg-primary text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-primary-dark transition"
-              >
-                Get Started
-              </Link>
-              <Link
-                to="/login"
-                className="bg-white text-primary px-8 py-3 rounded-lg text-lg font-semibold border-2 border-primary hover:bg-primary-lighter transition"
-              >
-                Sign In
-              </Link>
-            </div>
-          ) : (
-            <Link
-              to={user.role === "admin" ? "/admin/dashboard" : "/dashboard"}
-              className="inline-block bg-primary text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-primary-dark transition"
-            >
-              Go to Dashboard
-            </Link>
-          )}
-        </div>
-
-        {/* Features Section */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mt-16">
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <div className="w-12 h-12 bg-primary-lighter rounded-lg flex items-center justify-center mb-4">
-              <FiActivity className="w-6 h-6 text-primary" />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">AI Analysis</h3>
-            <p className="text-gray-600">
-              Advanced ML models analyze your blood test values to predict
-              disease risks.
+    <div className="min-h-screen bg-gray-50">
+      <LandingHeader />
+      <main
+        className="container mx-auto px-4 pt-[calc(var(--header-height)+1.5rem)] pb-16"
+        style={{ minHeight: "100vh" }}
+      >
+        <div className="mx-auto max-w-6xl">
+          <div className="py-12 text-center sm:py-16">
+            <h1 className="mb-4 text-4xl font-bold text-gray-900 sm:text-5xl">
+              AI-powered early disease insights
+            </h1>
+            <p className="mx-auto mb-10 max-w-2xl text-lg text-gray-600 sm:text-xl">
+              Explore lab-based risk guidance and recommendations. Sign in for a
+              secure account with JWT-protected APIs, or try a temporary demo
+              with no password.
             </p>
+            {showHeroCta}
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <div className="w-12 h-12 bg-secondary-lighter rounded-lg flex items-center justify-center mb-4">
-              <FiShield className="w-6 h-6 text-secondary" />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Risk Assessment</h3>
-            <p className="text-gray-600">
-              Get clear Low, Moderate, or High risk levels for common diseases.
-            </p>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
-              <FiFileText className="w-6 h-6 text-purple-600" />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Personalized Reports</h3>
-            <p className="text-gray-600">
-              Download detailed PDF or Excel reports with recommendations and
-              diet plans.
-            </p>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
-              <FiTrendingUp className="w-6 h-6 text-orange-600" />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Health Tracking</h3>
-            <p className="text-gray-600">
-              Monitor your health over time with detailed history and progress
-              tracking.
-            </p>
-          </div>
-        </div>
-
-        {/* How It Works */}
-        <div className="mt-16 bg-white p-8 rounded-lg shadow-md">
-          <h2 className="text-3xl font-bold text-center mb-8">How It Works</h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
-                1
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-lg bg-white p-6 shadow-md">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary-lighter">
+                <FiActivity className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Enter Test Values</h3>
+              <h3 className="mb-2 text-xl font-semibold">AI analysis</h3>
               <p className="text-gray-600">
-                Input your blood test results including glucose, hemoglobin,
-                liver enzymes, and more.
+                Rule-based and optional ML layers analyze your blood test
+                values for disease risk signals.
               </p>
             </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
-                2
+            <div className="rounded-lg bg-white p-6 shadow-md">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-secondary-lighter">
+                <FiShield className="h-6 w-6 text-secondary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">AI Analysis</h3>
+              <h3 className="mb-2 text-xl font-semibold">Secure sign-in</h3>
               <p className="text-gray-600">
-                Our machine learning models analyze your values and predict
-                disease risks.
+                Registered users get a signed token on each request. Demo mode
+                stays local and temporary.
               </p>
             </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
-                3
+            <div className="rounded-lg bg-white p-6 shadow-md">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100">
+                <FiFileText className="h-6 w-6 text-purple-600" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">
-                Get Recommendations
-              </h3>
+              <h3 className="mb-2 text-xl font-semibold">Reports</h3>
               <p className="text-gray-600">
-                Receive personalized diet plans, medication suggestions, and
-                recovery timelines.
+                Export PDF or Excel with diet plans, medication notes, and
+                timelines.
+              </p>
+            </div>
+            <div className="rounded-lg bg-white p-6 shadow-md">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100">
+                <FiTrendingUp className="h-6 w-6 text-orange-600" />
+              </div>
+              <h3 className="mb-2 text-xl font-semibold">History</h3>
+              <p className="text-gray-600">
+                Track trends over time—persisted for signed-in users; demo data
+                is isolated per session.
               </p>
             </div>
           </div>
+
+          <div className="mt-16 rounded-lg bg-white p-8 shadow-md">
+            <h2 className="mb-8 text-center text-3xl font-bold">How it works</h2>
+            <div className="grid gap-8 md:grid-cols-3">
+              <div className="text-center">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-white">
+                  1
+                </div>
+                <h3 className="mb-2 text-xl font-semibold">Enter lab values</h3>
+                <p className="text-gray-600">
+                  Add values from your report (or use reference defaults where
+                  needed).
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-white">
+                  2
+                </div>
+                <h3 className="mb-2 text-xl font-semibold">Run analysis</h3>
+                <p className="text-gray-600">
+                  The backend calls the AI service with your authenticated or
+                  demo context.
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-white">
+                  3
+                </div>
+                <h3 className="mb-2 text-xl font-semibold">Get guidance</h3>
+                <p className="text-gray-600">
+                  Review risk levels, diet ideas, and recovery milestones—always
+                  with clinician oversight in real care.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </Layout>
+      </main>
+    </div>
   );
 }

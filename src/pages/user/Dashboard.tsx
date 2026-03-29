@@ -52,7 +52,7 @@ export default function UserDashboard() {
     }
     setLoading(true);
     try {
-      const data = await getHealthHistory(user.id);
+      const data = await getHealthHistory();
       setHistory(data);
 
       let highRisk = 0;

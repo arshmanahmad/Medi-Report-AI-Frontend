@@ -1,12 +1,12 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
-interface ProtectedRouteProps {
+interface AdminRouteProps {
   children: React.ReactNode;
 }
 
-/** Allows signed-in users and demo guests (temporary session). */
-export default function ProtectedRoute({ children }: ProtectedRouteProps) {
+/** Admin UI requires a real JWT; demo mode cannot access. */
+export default function AdminRoute({ children }: AdminRouteProps) {
   const { user, loading, isDemo } = useAuth();
 
   if (loading) {
@@ -17,8 +17,12 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  if (!user && !isDemo) {
-    return <Navigate to="/" replace />;
+  if (isDemo || !user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  if (user.role !== "admin") {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;

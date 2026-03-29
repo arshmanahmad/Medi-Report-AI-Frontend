@@ -1,5 +1,71 @@
 // Constants for the application
 
+import type { MedicalTestInput } from "../types";
+
+/** Full panel defaults (used for hidden fields + “All Diseases” baseline). Matches backend rule defaults. */
+export const DEFAULT_MEDICAL_TEST_VALUES: MedicalTestInput = {
+  glucose: 95,
+  urea: 25,
+  creatinine: 0.9,
+  hemoglobin: 14.5,
+  platelets: 250000,
+  wbc: 7000,
+  rbc: 4.5,
+  alt: 30,
+  ast: 28,
+  bilirubin: 0.8,
+  albumin: 4.2,
+  sodium: 140,
+  potassium: 4.0,
+  cholesterol: 180,
+  hdl: 55,
+  ldl: 110,
+  triglycerides: 120,
+};
+
+/** Keys used by each disease rule in ai-services/prediction.py (single-disease mode). */
+export const DISEASE_FIELD_KEYS: Record<
+  string,
+  readonly (keyof MedicalTestInput)[]
+> = {
+  Diabetes: ["glucose"],
+  Hypertension: ["sodium", "potassium", "cholesterol"],
+  "Kidney Disorder": ["creatinine", "urea"],
+  "Liver Disorder": ["alt", "ast"],
+  "Heart Disease": ["cholesterol", "hdl", "ldl", "triglycerides"],
+  Anemia: ["hemoglobin"],
+  Infection: ["wbc"],
+  "All Diseases": [
+    "glucose",
+    "urea",
+    "creatinine",
+    "hemoglobin",
+    "platelets",
+    "wbc",
+    "rbc",
+    "alt",
+    "ast",
+    "bilirubin",
+    "albumin",
+    "sodium",
+    "potassium",
+    "cholesterol",
+    "hdl",
+    "ldl",
+    "triglycerides",
+  ],
+};
+
+export function getVisibleFieldKeys(
+  selectedDisease: string
+): Set<keyof MedicalTestInput> {
+  const keys = DISEASE_FIELD_KEYS[selectedDisease];
+  if (!keys) {
+    return new Set(DISEASE_FIELD_KEYS["All Diseases"]);
+  }
+  return new Set(keys);
+}
+
 export const RISK_LEVEL_COLORS = {
   Low: {
     bg: "bg-green-100",

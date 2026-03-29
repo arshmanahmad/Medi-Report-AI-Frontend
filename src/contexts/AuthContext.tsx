@@ -3,16 +3,37 @@ import {
   useContext,
   useState,
   useEffect,
+  useCallback,
 } from "react";
 import type { ReactNode } from "react";
 import type { User } from "../types";
-import { login as apiLogin, register as apiRegister } from "../services/backend";
+import {
+  login as apiLogin,
+  register as apiRegister,
+  AUTH_TOKEN_KEY,
+  APP_MODE_KEY,
+} from "../services/api";
+
+/** Mirrors backend `demo` user id for preview mode (no JWT). */
+export const DEMO_USER: User = {
+  id: "demo",
+  name: "Demo guest",
+  email: "demo@preview.local",
+  role: "user",
+  createdAt: "",
+};
+
+const USER_KEY = "user";
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  isDemo: boolean;
+  isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<User>;
+  register: (name: string, email: string, password: string) => Promise<User>;
   logout: () => void;
+  enterDemo: () => void;
+  exitDemo: () => void;
   loading: boolean;
 }
 
@@ -20,36 +41,93 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [isDemo, setIsDemo] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for stored user session
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    const mode = localStorage.getItem(APP_MODE_KEY);
+    const stored = localStorage.getItem(USER_KEY);
+
+    if (token && stored) {
+      try {
+        setUser(JSON.parse(stored) as User);
+        setIsDemo(false);
+      } catch {
+        localStorage.removeItem(USER_KEY);
+        localStorage.removeItem(AUTH_TOKEN_KEY);
+      }
+    } else if (mode === "demo") {
+      setUser(DEMO_USER);
+      setIsDemo(true);
+    } else {
+      setUser(null);
+      setIsDemo(false);
     }
     setLoading(false);
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const userData = await apiLogin(email, password);
-    setUser(userData);
-    localStorage.setItem("user", JSON.stringify(userData));
-  };
+  const login = useCallback(async (email: string, password: string) => {
+    const { user: u, token } = await apiLogin(email, password);
+    localStorage.setItem(AUTH_TOKEN_KEY, token);
+    localStorage.setItem(USER_KEY, JSON.stringify(u));
+    localStorage.removeItem(APP_MODE_KEY);
+    setUser(u);
+    setIsDemo(false);
+    return u;
+  }, []);
 
-  const register = async (name: string, email: string, password: string) => {
-    const userData = await apiRegister(name, email, password);
-    setUser(userData);
-    localStorage.setItem("user", JSON.stringify(userData));
-  };
+  const register = useCallback(
+    async (name: string, email: string, password: string) => {
+      const { user: u, token } = await apiRegister(name, email, password);
+      localStorage.setItem(AUTH_TOKEN_KEY, token);
+      localStorage.setItem(USER_KEY, JSON.stringify(u));
+      localStorage.removeItem(APP_MODE_KEY);
+      setUser(u);
+      setIsDemo(false);
+      return u;
+    },
+    []
+  );
 
-  const logout = () => {
+  const logout = useCallback(() => {
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(APP_MODE_KEY);
     setUser(null);
-    localStorage.removeItem("user");
-  };
+    setIsDemo(false);
+  }, []);
+
+  const enterDemo = useCallback(() => {
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    localStorage.setItem(APP_MODE_KEY, "demo");
+    setUser(DEMO_USER);
+    setIsDemo(true);
+  }, []);
+
+  const exitDemo = useCallback(() => {
+    localStorage.removeItem(APP_MODE_KEY);
+    setUser(null);
+    setIsDemo(false);
+  }, []);
+
+  const isAuthenticated = Boolean(user && !isDemo);
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isDemo,
+        isAuthenticated,
+        login,
+        register,
+        logout,
+        enterDemo,
+        exitDemo,
+        loading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
