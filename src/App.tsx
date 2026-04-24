@@ -111,6 +111,7 @@ function App() {
               </AdminRoute>
             }
           />
+
           {/* Legacy routes - redirect to new routes */}
           <Route
             path="/input"
