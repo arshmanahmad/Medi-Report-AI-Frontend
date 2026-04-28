@@ -22,7 +22,6 @@ export const DEMO_USER: User = {
   role: "user",
   createdAt: "",
 };
-
 const USER_KEY = "user";
 
 interface AuthContextType {
