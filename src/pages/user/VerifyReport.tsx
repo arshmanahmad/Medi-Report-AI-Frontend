@@ -49,9 +49,11 @@ const TEST_FIELD_DEFS: Array<{
 ];
 
 export default function VerifyReport() {
+  const MIN_PREDICTION_LOADING_MS = 1500;
   const { triggerRefresh } = useDataRefresh();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("");
   const [error, setError] = useState("");
   const [selectedDisease, setSelectedDisease] = useState("All Diseases");
 
@@ -68,6 +70,7 @@ export default function VerifyReport() {
 
   const onSubmit = async () => {
     setLoading(true);
+    setLoadingMessage("Reading medical markers...");
     setError("");
 
     try {
@@ -77,7 +80,16 @@ export default function VerifyReport() {
       };
       const diseaseToCheck =
         selectedDisease === "All Diseases" ? undefined : selectedDisease;
+      setLoadingMessage("Running AI disease analysis...");
+      const startTime = Date.now();
       const result = await generatePredictions(merged, diseaseToCheck);
+      const elapsed = Date.now() - startTime;
+      if (elapsed < MIN_PREDICTION_LOADING_MS) {
+        setLoadingMessage("Preparing your report view...");
+        await new Promise((resolve) =>
+          setTimeout(resolve, MIN_PREDICTION_LOADING_MS - elapsed)
+        );
+      }
       sessionStorage.setItem("predictionResult", JSON.stringify(result));
       sessionStorage.setItem("testValues", JSON.stringify(merged));
       triggerRefresh(); // realtime: Dashboard & History refetch
@@ -92,6 +104,7 @@ export default function VerifyReport() {
       console.error(err);
     } finally {
       setLoading(false);
+      setLoadingMessage("");
     }
   };
 
@@ -260,7 +273,7 @@ export default function VerifyReport() {
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>Analyzing...</span>
+                  <span>{loadingMessage || "Analyzing..."}</span>
                 </>
               ) : (
                 <>
