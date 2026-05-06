@@ -7,7 +7,6 @@ import Home from "./pages/auth/Home";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import Results from "./pages/Results";
-// User Pages
 import UserDashboard from "./pages/user/Dashboard";
 import VerifyReport from "./pages/user/VerifyReport";
 import History from "./pages/user/History";
