@@ -13,7 +13,6 @@ import History from "./pages/user/History";
 import DietTracking from "./pages/user/DietTracking";
 import DownloadReport from "./pages/user/DownloadReport";
 import ProfileSettings from "./pages/user/ProfileSettings";
-// Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Users from "./pages/admin/Users";
 import ModelManagement from "./pages/admin/ModelManagement";
